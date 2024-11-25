@@ -1,0 +1,85 @@
+#cloud-config
+# https://microstack.run/docs/single-node
+
+package_update: true
+fqdn: openstack.example.com
+manage_etc_hosts: localhost
+packages:
+- jq
+
+snap:
+  commands:
+   - snap install openstack --channel 2024.1/edge
+   - snap install yq
+
+write_files:
+  - path: /tmp/openstack-manifest-deployment
+    permissions: "0644"
+    content: |
+             core:
+               config:
+                 proxy:
+                   proxy_required: false
+                 bootstrap:
+                   management_cidr: 192.168.20.0/24
+                 region: RegionOne
+                 addons:
+                   metallb: 192.168.20.10-192.168.20.29
+                 external_network:
+                   nic: EXTERNAL_IFNAME
+                   cidr: 192.168.20.0/24
+                   gateway: 192.168.20.1
+                   start: 192.168.20.30
+                   end: 192.168.20.69
+                   network_type: flat
+                 user:
+                   remote_access_location: remote
+                   run_demo_setup: true
+                   username: demo
+                   password: demo
+                   cidr: 192.168.122.0/24
+                   nameservers: 8.8.8.8
+                   security_group_rules: true
+                 # for ceph
+                 # microceph_config:
+                 #   openstack.example.com:
+                 #     osd_devices: /dev/sdb
+
+users:
+  - default
+  - name: ubuntu
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBFgYNZOrHQWgirA7Ccdy+T7hWxLWKHCSCO0Imc3xbyr jpuente@thinkpad
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMFKI1Vo3YbhW2oB0pyJvdqgm22Epu299UeHw2EoopYb jpuente@thinkpadpersonal
+
+runcmd:
+  - |
+    # Install openstack
+    sudo -i -u ubuntu bash <<'EOF'
+      set -x
+      cd "${HOME}"
+      sunbeam prepare-node-script | bash -x && newgrp snap_daemon
+      cp /tmp/openstack-manifest-deployment .
+      cp /snap/openstack/current/etc/manifests/edge.yml .
+      yq eval-all '. as $item ireduce ({}; . * $item)' ./edge.yml ./openstack-manifest-deployment > openstack-manifest
+      EXTERNAL_IFNAME="$(ip --json a | jq '.[] | select(.address == "00:14:4f:f8:00:02")' | jq -r '.ifname')"
+      sed -i "s/EXTERNAL_IFNAME/${EXTERNAL_IFNAME}/g" openstack-manifest
+      # storage requires ceph
+      # sunbeam cluster bootstrap --role control,compute,storage -m openstack-manifest
+
+      sunbeam cluster bootstrap -m openstack-manifest
+      sunbeam configure -m openstack-manifest --openrc demo-openrc
+
+      # not sure about this, but I want VM to attach to the external-network
+      . <(sunbeam openrc)
+      openstack network set --share external-network
+      openstack subnet set --dns-nameserver 8.8.8.8 --dhcp external-subnet
+      openstack flavor create --public m1.builder --ram 4096 --disk 20 --vcpus 2 --public
+
+      ## TODO, put this in the deployment manifest if possible
+      juju config glance image-size-cap=50G -m openstack
+      # this requires microceph
+      # sunbeam enable telemetry
+    EOF
