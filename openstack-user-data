@@ -9,7 +9,7 @@ packages:
 
 snap:
   commands:
-   - snap install openstack --channel 2024.1/edge
+   - snap install openstack --channel 2024.1/${RISK}
    - snap install yq
 
 write_files:
@@ -26,7 +26,7 @@ write_files:
                  addons:
                    metallb: 192.168.20.10-192.168.20.29
                  external_network:
-                   nic: EXTERNAL_IFNAME
+                   nic: ${EXTERNAL_IFNAME}
                    cidr: 192.168.20.0/24
                    gateway: 192.168.20.1
                    start: 192.168.20.30
@@ -61,11 +61,11 @@ runcmd:
       set -x
       cd "${HOME}"
       sunbeam prepare-node-script | bash -x && newgrp snap_daemon
-      cp /tmp/openstack-manifest-deployment .
-      cp /snap/openstack/current/etc/manifests/edge.yml .
-      yq eval-all '. as $item ireduce ({}; . * $item)' ./edge.yml ./openstack-manifest-deployment > openstack-manifest
-      EXTERNAL_IFNAME="$(ip --json a | jq '.[] | select(.address == "00:14:4f:f8:00:02")' | jq -r '.ifname')"
-      sed -i "s/EXTERNAL_IFNAME/${EXTERNAL_IFNAME}/g" openstack-manifest
+      export EXTERNAL_IFNAME="$(ip --json a | jq '.[] | select(.address == "00:14:4f:f8:00:02")' | jq -r '.ifname')"
+      cat /tmp/openstack-manifest-deployment | envsubst '$EXTERNAL_IFNAME' > openstack-manifest-deployment
+      cp /snap/openstack/current/etc/manifests/${RISK}.yml .
+      yq eval-all '. as $item ireduce ({}; . * $item)' ./${RISK}.yml ./openstack-manifest-deployment > openstack-manifest
+
       # storage requires ceph
       # sunbeam cluster bootstrap --role control,compute,storage -m openstack-manifest
 

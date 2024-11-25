@@ -1,0 +1,26 @@
+#cloud-config
+package_update: true
+packages:
+- jq
+snap:
+  commands:
+  - snap install terraform --classic
+  - snap install lxd
+  - snap install juju --channel 3.5/stable
+  - snap install jhack
+
+users:
+  - default
+  - name: ubuntu
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBFgYNZOrHQWgirA7Ccdy+T7hWxLWKHCSCO0Imc3xbyr jpuente@thinkpad
+
+runcmd:
+  - snap connect jhack:dot-local-share-juju snapd
+  - lxd init --auto
+  # ipv6 and juju is problematic
+  - lxc network set lxdbr0 ipv6.address none
+  - sudo -u ubuntu mkdir -p /home/ubuntu/.local/share
+  - sudo -u ubuntu juju bootstrap localhost lxd

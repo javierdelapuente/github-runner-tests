@@ -17,11 +17,12 @@ lxc network delete ghbr0 || :
 
 
 # dns.mode to assign to the same bridge. We could have two bridges instead.
-lxc network create ghbr0 ipv6.address=none ipv4.address=192.168.20.1/24 ipv4.dhcp.ranges=192.168.20.200-192.168.20.240 ipv4.firewall=false ipv4.nat=true dns.mode=none
+lxc network create ghbr0 ipv6.address=none ipv4.address=192.168.20.1/24 ipv4.dhcp.ranges=192.168.20.200-192.168.20.240 ipv4.firewall=false ipv4.nat=true dns.mode=none || :
 
 
-# lxc init ubuntu:22.04 openstack --vm -c limits.cpu=8 -c limits.memory=16GiB -d root,size=150GiB --config=user.network-config="$(cat ./openstack-network-config)" --config=user.user-data="$(cat ./openstack-user-data)" 
-lxc init ubuntu:22.04 openstack --vm -c limits.cpu=8 -c limits.memory=16GiB -d root,size=150GiB --config=user.network-config="$(cat ./openstack-network-config)" --config=user.user-data="$(cat ./openstack-user-data)" 
+# lxc init ubuntu:22.04 openstack --vm -c limits.cpu=8 -c limits.memory=16GiB -d root,size=150GiB --config=user.network-config="$(cat ./openstack-network-config)" --config=user.user-data="$(cat ./openstack-user-data)"
+export RISK=edge
+lxc init ubuntu:22.04 openstack --vm -c limits.cpu=8 -c limits.memory=16GiB -d root,size=150GiB --config=user.network-config="$(cat ./openstack-network-config)" --config=user.user-data="$(cat ./openstack-user-data | envsubst '$RISK' )" 
 lxc config device add openstack eth0 nic nictype=bridged parent=ghbr0 name=eth0 hwaddr=00:14:4F:F8:00:01
 lxc config device add openstack eth1 nic nictype=bridged parent=ghbr0 name=eth1 hwaddr=00:14:4F:F8:00:02
 
@@ -45,3 +46,6 @@ lxc exec openstack -- su --login ubuntu
 # openstack external:
 # 192.168.20.30-192.68.20.69 
 
+lxc exec openstack -- sudo -u ubuntu sunbeam openrc
+lxc exec openstack -- sudo -u ubuntu cat /home/ubuntu/demo-openrc
+lxc exec openstack -- sudo -u ubuntu sunbeam dashboard-url
