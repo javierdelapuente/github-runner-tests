@@ -22,7 +22,7 @@ lxc network create ghbr0 ipv6.address=none ipv4.address=192.168.20.1/24 ipv4.dhc
 
 # lxc init ubuntu:22.04 openstack --vm -c limits.cpu=8 -c limits.memory=16GiB -d root,size=150GiB --config=user.network-config="$(cat ./openstack-network-config)" --config=user.user-data="$(cat ./openstack-user-data)"
 export RISK=edge
-lxc init ubuntu:22.04 openstack --vm -c limits.cpu=8 -c limits.memory=16GiB -d root,size=150GiB --config=user.network-config="$(cat ./openstack-network-config)" --config=user.user-data="$(cat ./openstack-user-data | envsubst '$RISK' )" 
+lxc init ubuntu:22.04 openstack --vm -c limits.cpu=12 -c limits.memory=16GiB -d root,size=150GiB --config=user.network-config="$(cat ./openstack-network-config)" --config=user.user-data="$(cat ./openstack-user-data | envsubst '$RISK' )" 
 lxc config device add openstack eth0 nic nictype=bridged parent=ghbr0 name=eth0 hwaddr=00:14:4F:F8:00:01
 lxc config device add openstack eth1 nic nictype=bridged parent=ghbr0 name=eth1 hwaddr=00:14:4F:F8:00:02
 
@@ -32,12 +32,6 @@ lxc config device add openstack eth1 nic nictype=bridged parent=ghbr0 name=eth1 
 # lxc storage volume create default openstack-vol size=50GiB --type=block
 # lxc config device add openstack openstack-vol disk pool=default source=openstack-vol
 
-lxc start openstack
-
-retry -d 5 -t 5 lxc exec openstack -- true
-time lxc exec openstack -- cloud-init status --wait
-
-lxc exec openstack -- su --login ubuntu
 
 # ranges:
 # openstack metallb:
@@ -46,6 +40,14 @@ lxc exec openstack -- su --login ubuntu
 # openstack external:
 # 192.168.20.30-192.68.20.69 
 
+lxc start openstack
+
+retry -d 5 -t 5 lxc exec openstack -- true
+time lxc exec openstack -- cloud-init status --wait
+
+
 lxc exec openstack -- sudo -u ubuntu sunbeam openrc
 lxc exec openstack -- sudo -u ubuntu cat /home/ubuntu/demo-openrc
 lxc exec openstack -- sudo -u ubuntu sunbeam dashboard-url
+
+# lxc exec openstack -- su --login ubuntu

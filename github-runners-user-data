@@ -2,9 +2,14 @@
 package_update: true
 packages:
 - jq
+- squid
+- pipx
+- build-essential
+- python3-dev
 snap:
   commands:
   - snap install terraform --classic
+  - snap install charmcraft --classic
   - snap install lxd
   - snap install juju --channel 3.5/stable
   - snap install jhack
@@ -20,7 +25,11 @@ users:
 runcmd:
   - snap connect jhack:dot-local-share-juju snapd
   - lxd init --auto
-  # ipv6 and juju is problematic
+  # ipv6 and juju are problematic
   - lxc network set lxdbr0 ipv6.address none
   - sudo -u ubuntu mkdir -p /home/ubuntu/.local/share
   - sudo -u ubuntu juju bootstrap localhost lxd
+  - sed -i 's/http_access allow localhost/http_access allow all/' /etc/squid/squid.conf 
+  - systemctl restart squid
+  - sudo -u ubuntu pipx install tox
+  - sudo -u ubuntu pipx ensurepath
