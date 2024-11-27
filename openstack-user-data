@@ -77,7 +77,7 @@ runcmd:
       . <(sunbeam openrc)
       openstack network set --share external-network
       openstack subnet set --dns-nameserver 8.8.8.8 --dhcp external-subnet
-      openstack flavor create --public m1.builder --ram 2048 --disk 20 --vcpus 2 --public
+      openstack flavor create --public m1.builder --ram 1024 --disk 20 --vcpus 2 --public
 
       ## TODO, put this in the deployment manifest if possible
       juju config glance image-size-cap=50G -m openstack
