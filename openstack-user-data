@@ -70,7 +70,7 @@ runcmd:
       # storage requires ceph
       # sunbeam cluster bootstrap --role control,compute,storage -m openstack-manifest
 
-      sunbeam cluster bootstrap -m openstack-manifest
+      sunbeam cluster bootstrap -m openstack-manifest --role control,compute
       sunbeam configure -m openstack-manifest --openrc demo-openrc
 
       # not sure about this, but I want VM to attach to the external-network

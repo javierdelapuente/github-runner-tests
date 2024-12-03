@@ -5,7 +5,7 @@ set -euo pipefail
 
 lxc delete github-runners --force || :
 
-lxc init ubuntu:22.04 github-runners --vm -c limits.cpu=4 -c limits.memory=6GiB -d root,size=60GiB  --config=user.user-data="$(cat ./github-runners-user-data)" --config=user.network-config="$(cat ./github-runners-network-config)"
+lxc init ubuntu:22.04 github-runners --vm -c limits.cpu=6 -c limits.memory=12GiB -d root,size=100GiB  --config=user.user-data="$(cat ./github-runners-user-data)" --config=user.network-config="$(cat ./github-runners-network-config)"
 
 
 # lxc network set ghbr0 bridge.mtu=1400

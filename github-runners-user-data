@@ -11,7 +11,7 @@ snap:
   - snap install terraform --classic
   - snap install charmcraft --classic
   - snap install lxd
-  - snap install juju --channel 3.5/stable
+  - snap install juju --channel 3.6/stable
   - snap install jhack
 
 users:
