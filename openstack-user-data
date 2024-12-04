@@ -23,6 +23,8 @@ write_files:
                  bootstrap:
                    management_cidr: 192.168.20.0/24
                  region: RegionOne
+                 k8s-addons:
+                   loadbalancer: 192.168.20.10-192.168.20.29
                  addons:
                    metallb: 192.168.20.10-192.168.20.29
                  external_network:
@@ -30,8 +32,6 @@ write_files:
                    cidr: 192.168.20.0/24
                    gateway: 192.168.20.1
                    range: 192.168.20.30-192.168.20.69
-                   start: 192.168.20.30
-                   end: 192.168.20.69
                    network_type: flat
                  user:
                    remote_access_location: remote
@@ -45,6 +45,12 @@ write_files:
                  # microceph_config:
                  #   openstack.example.com:
                  #     osd_devices: /dev/sdb
+               software:
+                 charms:
+                   glance-k8s:
+                     # channel: 2024.1/beta
+                     storage:
+                       local-repository: "10G"
 
 users:
   - default
@@ -61,11 +67,12 @@ runcmd:
     sudo -i -u ubuntu bash <<'EOF'
       set -x
       cd "${HOME}"
-      sunbeam prepare-node-script | bash -x && newgrp snap_daemon
       export EXTERNAL_IFNAME="$(ip --json a | jq '.[] | select(.address == "00:14:4f:f8:00:02")' | jq -r '.ifname')"
       cat /tmp/openstack-manifest-deployment | envsubst '$EXTERNAL_IFNAME' > openstack-manifest-deployment
       cp /snap/openstack/current/etc/manifests/${RISK}.yml .
       yq eval-all '. as $item ireduce ({}; . * $item)' ./${RISK}.yml ./openstack-manifest-deployment > openstack-manifest
+
+      sunbeam prepare-node-script | bash -x && newgrp snap_daemon
 
       # storage requires ceph
       # sunbeam cluster bootstrap --role control,compute,storage -m openstack-manifest

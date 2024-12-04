@@ -21,8 +21,8 @@ lxc network create ghbr0 ipv6.address=none ipv4.address=192.168.20.1/24 ipv4.dhc
 
 
 # lxc init ubuntu:22.04 openstack --vm -c limits.cpu=8 -c limits.memory=20GiB -d root,size=200GiB --config=user.network-config="$(cat ./openstack-network-config)" --config=user.user-data="$(cat ./openstack-user-data)"
-export RISK=edge
-lxc init ubuntu:22.04 openstack --vm -c limits.cpu=12 -c limits.memory=16GiB -d root,size=150GiB --config=user.network-config="$(cat ./openstack-network-config)" --config=user.user-data="$(cat ./openstack-user-data | envsubst '$RISK' )" 
+export RISK=beta
+lxc init ubuntu:22.04 openstack --vm -c limits.cpu=12 -c limits.memory=32GiB -d root,size=200GiB --config=user.network-config="$(cat ./openstack-network-config)" --config=user.user-data="$(cat ./openstack-user-data | envsubst '$RISK' )" 
 lxc config device add openstack eth0 nic nictype=bridged parent=ghbr0 name=eth0 hwaddr=00:14:4F:F8:00:01
 lxc config device add openstack eth1 nic nictype=bridged parent=ghbr0 name=eth1 hwaddr=00:14:4F:F8:00:02
 
