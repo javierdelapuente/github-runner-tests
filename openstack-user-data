@@ -2,7 +2,7 @@
 # https://microstack.run/docs/single-node
 
 package_update: true
-fqdn: openstack.example.com
+fqdn: openstack.delapuente.es
 manage_etc_hosts: localhost
 packages:
 - jq
@@ -41,16 +41,17 @@ write_files:
                    cidr: 192.168.122.0/24
                    nameservers: 8.8.8.8
                    security_group_rules: true
-                 # for ceph
-                 # microceph_config:
-                 #   openstack.example.com:
-                 #     osd_devices: /dev/sdb
+                 # Comment if ceph is not needed
+                 microceph_config:
+                   openstack.delapuente.es:
+                     osd_devices: /dev/sdb
                software:
                  charms:
                    glance-k8s:
-                     # channel: 2024.1/beta
                      storage:
-                       local-repository: "10G"
+                       local-repository: "25G"
+                     config:
+                       image-size-cap: 10G
 
 users:
   - default
@@ -75,9 +76,9 @@ runcmd:
       sunbeam prepare-node-script | bash -x && newgrp snap_daemon
 
       # storage requires ceph
-      # sunbeam cluster bootstrap --role control,compute,storage -m openstack-manifest
+      sunbeam cluster bootstrap --role control,compute,storage -m openstack-manifest
+      # sunbeam cluster bootstrap -m openstack-manifest --role control,compute
 
-      sunbeam cluster bootstrap -m openstack-manifest --role control,compute
       sunbeam configure -m openstack-manifest --openrc demo-openrc
 
       # not sure about this, but I want VM to attach to the external-network
@@ -87,7 +88,7 @@ runcmd:
       openstack flavor create --public m1.builder --ram 1024 --disk 20 --vcpus 2 --public
 
       ## TODO, put this in the deployment manifest if possible
-      juju config glance image-size-cap=50G -m openstack
+      # juju config glance image-size-cap=10G -m openstack
       # this requires microceph
       # sunbeam enable telemetry
     EOF

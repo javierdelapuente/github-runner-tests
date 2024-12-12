@@ -8,7 +8,7 @@ lxc file push demo-openrc github-runners/home/ubuntu/demo-openrc
 
 lxc exec github-runners -- su --login ubuntu
 
-. <( cat demo-openrc )
+. <( cat ~/demo-openrc )
 cd /home/ubuntu/github/javierdelapuente/github-runner-operator
 
 REPOSITORY=javierdelapuente/github-runner-operator
@@ -68,7 +68,10 @@ tox -e integration-juju3.6 -- -x  --log-cli-level=INFO  --log-format="%(asctime)
 
 
 ## OPENSTACK TESTS
+# If there is a clouds.yaml file when packing the charm, it will be included in the charm and it will break!
+
 PROXY_IP=192.168.20.3
+PROXY_IP=192.168.20.1
 export GITHUB_ENV=$HOME/githubenv
 bash ./scripts/pre-integration-test.sh
 set -a
