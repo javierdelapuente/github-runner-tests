@@ -1,5 +1,20 @@
 ```
+# create a .secrets file with something like:
+echo "export TOKEN=<Your github secret token>" > .secrets
+
+# Configure a squid proxy somewhere where the runners can use it this, 
+# and note the ip.
+sudo apt install squid
+sed -i 's/http_access allow localhost/http_access allow all/' /etc/squid/squid.conf 
+systemctl restart squid
+
+
+
+# prepare openstack:
 ./prepare_openstack.sh
+
+# now the github runners machine with lxd.
+lxc file pull openstack/home/ubuntu/demo-openrc .
 ./prepare_githubrunners.sh
 
 lxc file pull openstack/home/ubuntu/demo-openrc .
